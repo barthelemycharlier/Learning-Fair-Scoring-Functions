@@ -32,9 +32,9 @@ def plot_f_auc(df, iters):
     plt.figure(figsize=(4, 2))
     n_min = min(df.shape[0], len(iters))
     plt.plot(iters[:n_min], df["f_auc"][:n_min], color="green",
-             label="fair $\Delta$AUC")
+             label=r"fair $\Delta$AUC")
     plt.plot(iters[:n_min], df["r_f_auc"][:n_min],
-             color="blue", label="relaxed fair $\Delta$AUC")
+             color="blue", label=r"relaxed fair $\Delta$AUC")
     plt.xlabel("iterations")
     plt.legend()
     plt.grid()

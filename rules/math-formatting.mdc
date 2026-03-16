@@ -1,0 +1,8 @@
+---
+description: Use dollar-sign syntax for all math expressions
+alwaysApply: true
+---
+# Math Formatting
+- Use `$ ... $` for inline math.
+- Use `$$ ... $$` for display (block) math.
+- Never use `\( \)` or `\[ \]` for math.

@@ -429,8 +429,30 @@ class AUCCons(GeneralModel):
 
         s_out = tf.add(tf.matmul(fc1, self.weights['w_out']),
                        self.biases['b_out'])
-        s_out = tf.compat.v1.layers.batch_normalization(s_out, trainable=False,
-                                              training=self.is_train)
+
+        # Manual batch normalization (replaces tf.compat.v1.layers.batch_normalization
+        # which is unavailable with Keras 3 / TF >= 2.16).
+        _bn_eps = 1e-3
+        _bn_decay = 0.99
+        _bn_moving_mean = tf.Variable(tf.zeros([1]), trainable=False,
+                                      name='bn_moving_mean')
+        _bn_moving_var = tf.Variable(tf.ones([1]), trainable=False,
+                                     name='bn_moving_var')
+        _bn_batch_mean, _bn_batch_var = tf.nn.moments(s_out, axes=[0])
+        _upd_mean = tf.compat.v1.assign(
+            _bn_moving_mean,
+            _bn_decay * _bn_moving_mean + (1.0 - _bn_decay) * _bn_batch_mean)
+        _upd_var = tf.compat.v1.assign(
+            _bn_moving_var,
+            _bn_decay * _bn_moving_var + (1.0 - _bn_decay) * _bn_batch_var)
+        tf.compat.v1.add_to_collection(tf.compat.v1.GraphKeys.UPDATE_OPS, _upd_mean)
+        tf.compat.v1.add_to_collection(tf.compat.v1.GraphKeys.UPDATE_OPS, _upd_var)
+        s_out = tf.cond(
+            self.is_train,
+            lambda: tf.nn.batch_normalization(
+                s_out, _bn_batch_mean, _bn_batch_var, None, None, _bn_eps),
+            lambda: tf.nn.batch_normalization(
+                s_out, _bn_moving_mean, _bn_moving_var, None, None, _bn_eps))
 
         return s_out
 
